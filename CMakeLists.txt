@@ -19,7 +19,7 @@ HunterGate(
 )
 
 
-project(filesystem)
+project(filesystem_lib)
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
@@ -29,19 +29,18 @@ find_package(GTest CONFIG REQUIRED)
 hunter_add_package(Boost COMPONENTS filesystem)
 find_package(Boost CONFIG REQUIRED filesystem)
 
-add_library(filesystem STATIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp
-        sources/main.cpp sources/main.cpp)
+add_library(filesystem_lib STATIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/sources/source.cpp)
 
 add_executable(tests
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/test.cpp
         )
 
-add_executable(main
+add_executable(filesystem_exc
         ${CMAKE_CURRENT_SOURCE_DIR}/sources/main.cpp
         )
 
-target_include_directories(filesystem
+target_include_directories(filesystem_lib
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
 
@@ -49,29 +48,30 @@ target_include_directories(tests
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
 
-target_include_directories(main
+target_include_directories(filesystem_exc
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
 
-target_link_libraries(tests GTest::gmock_main Boost::filesystem filesystem)
-target_link_libraries(main Boost::filesystem filesystem)
+target_link_libraries(filesystem_lib Boost::filesystem)
+target_link_libraries(tests GTest::gmock_main Boost::filesystem filesystem_lib)
+target_link_libraries(filesystem_exc Boost::filesystem filesystem_lib)
 
 enable_testing()
 add_test(NAME unit_tests COMMAND tests)
 
-if(BUILD_COVERAGE)
-  function(ENABLE_PROJECT_COVERAGE PROJECT)
-    target_compile_options(${PROJECT} PRIVATE --coverage)
-    target_link_libraries(${PROJECT} --coverage)
-    add_coverage(${PROJECT})
-  endfunction()
+if (BUILD_COVERAGE)
+    function(ENABLE_PROJECT_COVERAGE PROJECT)
+        target_compile_options(${PROJECT} PRIVATE --coverage)
+        target_link_libraries(${PROJECT} --coverage)
+        add_coverage(${PROJECT})
+    endfunction()
 
-  set(ENABLE_COVERAGE ON CACHE BOOL "Enable coverage build." FORCE)
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-  find_package(codecov)
-  enable_project_coverage(filesystem)
-  enable_project_coverage(tests)
-  list(APPEND LCOV_REMOVE_PATTERNS "'${PROJECT_SOURCE_DIR}/tests/*'")
-  coverage_evaluate()
-endif()
+    set(ENABLE_COVERAGE ON CACHE BOOL "Enable coverage build." FORCE)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+    find_package(codecov)
+    enable_project_coverage(filesystem_lib)
+    enable_project_coverage(tests)
+    list(APPEND LCOV_REMOVE_PATTERNS "'${PROJECT_SOURCE_DIR}/tests/*'")
+    coverage_evaluate()
+endif ()
 
