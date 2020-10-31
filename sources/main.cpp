@@ -4,8 +4,9 @@
 #include <header.hpp>
 
 int main() {
-  std::string s_p("/home/killoboker/CLionProjects/lab-04-boost-filesystem/misc");
+  std::string s_p(
+      "/home/killoboker/CLionProjects/lab-04-boost-filesystem/misc");
   Filesystem ss(s_p);
-  ss.print_files_set();
+  ss.print();
   return 0;
 }

@@ -9,13 +9,27 @@
 #define INCLUDE_HEADER_HPP_
 
 struct File_info {
-  std::string directory = "current";
-  std::string name;
+  std::string broker;
+  std::string name_full;
+  std::string account;
+  std::string date;
+  int count;
+  File_info(std::string broker_, std::string name_full_, std::string account_,
+            std::string date_, int count_)
+      : broker(broker_),
+        name_full(name_full_),
+        account(account_),
+        date(date_),
+        count(count_) {}
 };
 
 bool operator<(File_info const &lhs, File_info const &rhs) {
-  if (lhs.directory == rhs.directory) return lhs.name < rhs.name;
-  return lhs.directory < rhs.directory;
+  if (lhs.broker == rhs.broker) return lhs.name_full < rhs.name_full;
+  return lhs.broker < rhs.broker;
+}
+
+bool operator==(File_info const &lhs, File_info const &rhs) {
+  return (lhs.name_full == rhs.name_full && lhs.broker == rhs.broker);
 }
 
 bool is_correct_account(std::string filename) {
@@ -30,6 +44,10 @@ bool is_correct_account(std::string filename) {
   return true;
 }
 
+std::string get_account(std::string filename) { return filename.substr(8, 8); }
+
+std::string get_date(std::string filename) { return filename.substr(17, 8); }
+
 void run_directory(boost::filesystem::path path, std::set<File_info> &set_in) {
   std::string c_d = path.filename().string();
   for (const auto &current_path : boost::filesystem::directory_iterator{path}) {
@@ -39,9 +57,9 @@ void run_directory(boost::filesystem::path path, std::set<File_info> &set_in) {
     } else {
       if (current_path.path().extension().string() == ".txt" &&
           is_correct_account(current_path.path().stem().string())) {
-        File_info tmp;
-        tmp.name = current_path.path().filename().string();
-        tmp.directory = c_d;
+        std::string current_filename = current_path.path().filename().string();
+        File_info tmp(c_d, current_filename, get_account(current_filename),
+                      get_date(current_filename), 1);
         set_in.emplace(tmp);
       }
     }
@@ -51,6 +69,7 @@ void run_directory(boost::filesystem::path path, std::set<File_info> &set_in) {
 class Filesystem {
   boost::filesystem::path path;
   std::set<File_info> file_info_set;
+  std::set<File_info> sorted_set;
 
  public:
   Filesystem(std::string &path_) : path(path_) {
@@ -59,7 +78,42 @@ class Filesystem {
 
   void print_files_set() {
     for (auto &file : file_info_set)
-      std::cout << file.directory << " " << file.name << std::endl;
+      std::cout << file.broker << " " << file.name_full << " " << file.count
+                << std::endl;
+  }
+
+  void print_sorted_set() {
+    for (auto &file : sorted_set)
+      std::cout << "broker:" << file.broker << " account:" << file.account
+                << " files:" << file.count << " lastdate:" << file.date
+                << std::endl;
+  };
+
+  void make_sorted() {
+    std::string current_account = file_info_set.begin()->account;
+    std::string c_name;
+    std::string c_b;
+    int counter = 0;
+    for (auto &file : file_info_set) {
+      if (file.account == current_account) {
+        ++counter;
+        c_name = file.name_full;
+        c_b = file.broker;
+      } else {
+        File_info tmp(c_b, c_name, current_account, get_date(c_name), counter);
+        sorted_set.emplace(tmp);
+        current_account = file.account;
+        counter = 0;
+      }
+    }
+  }
+
+  void print() {
+    print_files_set();
+    make_sorted();
+    std::cout << "-------------------------------------------------------------"
+              << std::endl;
+    print_sorted_set();
   }
 };
 
