@@ -14,7 +14,8 @@ struct File_info {
 };
 
 bool operator<(File_info const &lhs, File_info const &rhs) {
-  return lhs.name < rhs.name;
+  if (lhs.directory == rhs.directory) return lhs.name < rhs.name;
+  return lhs.directory < rhs.directory;
 }
 
 bool is_correct_account(std::string filename) {
@@ -29,25 +30,12 @@ bool is_correct_account(std::string filename) {
   return true;
 }
 
-void run_directory(boost::filesystem::path path,
-                   std::set<std::string> &set_in) {
-  for (const auto &current_path : boost::filesystem::directory_iterator{path}) {
-    if (is_directory(current_path)) {
-      run_directory(current_path, set_in);
-    } else {
-      if (current_path.path().extension().string() == ".txt" &&
-          is_correct_account(current_path.path().stem().string()))
-        set_in.emplace(current_path.path().filename().string());
-    }
-  }
-}
-
-void run_directory_(boost::filesystem::path path, std::set<File_info> &set_in) {
+void run_directory(boost::filesystem::path path, std::set<File_info> &set_in) {
   std::string c_d = path.filename().string();
   for (const auto &current_path : boost::filesystem::directory_iterator{path}) {
     if (is_directory(current_path)) {
       c_d = current_path.path().filename().string();
-      run_directory_(current_path, set_in);
+      run_directory(current_path, set_in);
     } else {
       if (current_path.path().extension().string() == ".txt" &&
           is_correct_account(current_path.path().stem().string())) {
@@ -63,11 +51,15 @@ void run_directory_(boost::filesystem::path path, std::set<File_info> &set_in) {
 class Filesystem {
   boost::filesystem::path path;
   std::set<File_info> file_info_set;
-  std::set<std::string> file_set;
 
  public:
   Filesystem(std::string &path_) : path(path_) {
-    run_directory_(path, file_info_set);
+    run_directory(path, file_info_set);
+  }
+
+  void print_files_set() {
+    for (auto &file : file_info_set)
+      std::cout << file.directory << " " << file.name << std::endl;
   }
 };
 

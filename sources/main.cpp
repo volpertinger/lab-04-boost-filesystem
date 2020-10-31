@@ -4,9 +4,8 @@
 #include <header.hpp>
 
 int main() {
-  boost::filesystem::path path ("/home/killoboker/CLionProjects/lab-04-boost-filesystem/misc");
   std::string s_p("/home/killoboker/CLionProjects/lab-04-boost-filesystem/misc");
   Filesystem ss(s_p);
-  //run_directory("/home/killoboker/CLionProjects/lab-04-boost-filesystem/misc",set_in);
+  ss.print_files_set();
   return 0;
 }
